@@ -9,7 +9,7 @@
     </div>
     <form class="d-flex gap-2" method="get" action="{{ url_for('budgets') }}">
       <input class="form-control" style="max-width: 160px" type="month" name="month" value="{{ month }}">
-      <button class="btn btn-dark" type="submit">Go</button>
+      <button class="btn btn-primary" type="submit">Go</button>
     </form>
   </div>
 
@@ -32,7 +32,7 @@
             <input class="form-control" name="amount" placeholder="e.g. 500.00">
           </div>
           <div class="col-12 d-grid mt-2">
-            <button class="btn btn-dark" type="submit">Save budget</button>
+            <button class="btn btn-primary" type="submit">Save budget</button>
           </div>
         </form>
       </div>
@@ -61,7 +61,7 @@
                   <td class="text-end text-nowrap amount-neg">{{ "$%0.2f"|format(spent/100.0) }}</td>
                   <td>
                     <div class="progress" style="height: 10px;">
-                      <div class="progress-bar {{ 'bg-danger' if pct >= 100 else 'bg-dark' }}" style="width: {{ [pct, 100]|min }}%"></div>
+                      <div class="progress-bar {{ 'bg-danger' if pct >= 100 else 'bg-primary' }}" style="width: {{ [pct, 100]|min }}%"></div>
                     </div>
                     <div class="small subtle mt-1">{{ pct|round(0) }}%</div>
                   </td>

@@ -1,5 +1,12 @@
 :root{
   --card-radius: 16px;
+  --brand-purple: #6f42c1;
+
+  /* Bootstrap theme overrides */
+  --bs-primary: var(--brand-purple);
+  --bs-primary-rgb: 111, 66, 193;
+  --bs-link-color: var(--brand-purple);
+  --bs-link-hover-color: #5a34a3;
 }
 
 .card{

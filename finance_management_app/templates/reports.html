@@ -9,7 +9,7 @@
     </div>
     <form class="d-flex gap-2" method="get" action="{{ url_for('reports') }}">
       <input class="form-control" style="max-width: 160px" type="month" name="month" value="{{ month }}">
-      <button class="btn btn-dark" type="submit">Go</button>
+      <button class="btn btn-primary" type="submit">Go</button>
     </form>
   </div>
 
@@ -80,8 +80,8 @@
           data: tValues,
           tension: .35,
           fill: true,
-          borderColor: 'rgba(33,37,41,.9)',
-          backgroundColor: 'rgba(33,37,41,.08)',
+          borderColor: 'rgba(111,66,193,.95)',
+          backgroundColor: 'rgba(111,66,193,.12)',
           pointRadius: 3
         }]},
         options: {
