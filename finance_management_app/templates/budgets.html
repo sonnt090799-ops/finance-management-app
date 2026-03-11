@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% set title = "Budgets" %}
+
+{% block content %}
+  <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3">
+    <div>
+      <div class="h3 mb-1">Budgets</div>
+      <div class="subtle">Set monthly budgets per expense category and track progress.</div>
+    </div>
+    <form class="d-flex gap-2" method="get" action="{{ url_for('budgets') }}">
+      <input class="form-control" style="max-width: 160px" type="month" name="month" value="{{ month }}">
+      <button class="btn btn-dark" type="submit">Go</button>
+    </form>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-5">
+      <div class="card p-3">
+        <div class="fw-semibold mb-2">Set / update budget</div>
+        <form method="post" action="{{ url_for('budgets_set') }}" class="row g-2">
+          <input type="hidden" name="month" value="{{ month }}">
+          <div class="col-12">
+            <label class="form-label small subtle mb-1">Category</label>
+            <select class="form-select" name="category_id">
+              {% for c in categories %}
+                <option value="{{ c.id }}">{{ c.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label small subtle mb-1">Amount</label>
+            <input class="form-control" name="amount" placeholder="e.g. 500.00">
+          </div>
+          <div class="col-12 d-grid mt-2">
+            <button class="btn btn-dark" type="submit">Save budget</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-7">
+      <div class="card p-3">
+        <div class="fw-semibold mb-2">Progress ({{ month }})</div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th class="text-end" style="width: 140px;">Budget</th>
+                <th class="text-end" style="width: 140px;">Spent</th>
+                <th style="width: 160px;">Progress</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in rows %}
+                {% set spent = -1 * (r.actual_cents if r.actual_cents < 0 else 0) %}
+                {% set pct = (spent / r.budget_cents * 100) if r.budget_cents else 0 %}
+                <tr>
+                  <td class="fw-semibold">{{ r.category_name }}</td>
+                  <td class="text-end text-nowrap">{{ "$%0.2f"|format(r.budget_cents/100.0) }}</td>
+                  <td class="text-end text-nowrap amount-neg">{{ "$%0.2f"|format(spent/100.0) }}</td>
+                  <td>
+                    <div class="progress" style="height: 10px;">
+                      <div class="progress-bar {{ 'bg-danger' if pct >= 100 else 'bg-dark' }}" style="width: {{ [pct, 100]|min }}%"></div>
+                    </div>
+                    <div class="small subtle mt-1">{{ pct|round(0) }}%</div>
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="4" class="text-center subtle py-4">No expense categories found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% set title = "Dashboard" %}
+
+{% block content %}
+  <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3">
+    <div>
+      <div class="h3 mb-1">Dashboard</div>
+      <div class="subtle">Monthly snapshot, budgets, and quick insights.</div>
+    </div>
+    <form class="d-flex gap-2" method="get" action="{{ url_for('dashboard') }}">
+      <input class="form-control" style="max-width: 160px" type="month" name="month" value="{{ month }}">
+      <button class="btn btn-dark" type="submit">Go</button>
+    </form>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-md-4">
+      <div class="card p-3">
+        <div class="subtle small">Income</div>
+        <div class="h3 amount-pos mb-0">{{ income.format() }}</div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card p-3">
+        <div class="subtle small">Expenses</div>
+        <div class="h3 amount-neg mb-0">{{ expense.format() }}</div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card p-3">
+        <div class="subtle small">Net</div>
+        <div class="h3 mb-0 {{ 'amount-pos' if net.cents >= 0 else 'amount-neg' }}">{{ net.format() }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-7">
+      <div class="card p-3 h-100">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="fw-semibold">Spending by category</div>
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('reports', month=month) }}">Open reports</a>
+        </div>
+        <canvas id="catChart" height="120"></canvas>
+        <div class="subtle small mt-2">Tip: negative values are expenses; positive are income.</div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-5">
+      <div class="card p-3 h-100">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="fw-semibold">Recent transactions</div>
+          <a class="btn btn-sm btn-dark" href="{{ url_for('transactions', month=month) }}">Add & view</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th class="text-end">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in recent_txs %}
+                <tr>
+                  <td class="text-nowrap">{{ t.tx_date }}</td>
+                  <td>
+                    <div class="fw-semibold">{{ t.description }}</div>
+                    <div class="small subtle">{{ t.category_name or "Uncategorized" }}</div>
+                  </td>
+                  <td class="text-end text-nowrap {{ 'amount-pos' if t.amount_cents >= 0 else 'amount-neg' }}">
+                    {{ ("$%0.2f"|format((t.amount_cents/100.0))) }}
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="3" class="text-center subtle py-4">No transactions yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-3 mt-3">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <div class="fw-semibold">Budgets ({{ month }})</div>
+      <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('budgets', month=month) }}">Manage budgets</a>
+    </div>
+    <div class="row g-3">
+      {% for b in budgets %}
+        {% set spent = -1 * (b.actual_cents if b.actual_cents < 0 else 0) %}
+        {% set pct = (spent / b.budget_cents * 100) if b.budget_cents else 0 %}
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="p-2 border rounded-3 bg-white">
+            <div class="d-flex justify-content-between">
+              <div class="fw-semibold">{{ b.category_name }}</div>
+              <span class="pill">{{ "$%0.2f"|format(b.budget_cents/100.0) }}</span>
+            </div>
+            <div class="small subtle mt-1">Spent {{ "$%0.2f"|format(spent/100.0) }} ({{ pct|round(0) }}%)</div>
+            <div class="progress mt-2" style="height: 10px;">
+              <div class="progress-bar {{ 'bg-danger' if pct >= 100 else 'bg-dark' }}" style="width: {{ [pct, 100]|min }}%"></div>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="col-12 subtle">No budgets set yet. Add some on the Budgets page.</div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    const byCat = {{ by_cat|tojson }};
+    const labels = byCat.map(r => r.name);
+    const values = byCat.map(r => (r.total_cents || 0) / 100.0);
+    const colors = byCat.map(r => (r.kind === 'expense') ? 'rgba(176,42,55,.85)' : 'rgba(20,108,67,.85)');
+
+    const ctx = document.getElementById('catChart');
+    if (ctx) {
+      new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Amount', data: values, backgroundColor: colors, borderRadius: 8 }] },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false }, tooltip: { callbacks: {
+            label: (it) => '$' + (it.parsed.y ?? 0).toFixed(2)
+          } } },
+          scales: { y: { ticks: { callback: (v) => '$' + v } } }
+        }
+      });
+    }
+  </script>
+{% endblock %}
+

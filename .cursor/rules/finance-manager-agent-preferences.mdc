@@ -1,0 +1,58 @@
+---
+description: Preferences for the Finance Manager (Flask + SQLite) project
+alwaysApply: true
+---
+
+# Finance Manager — Agent Preferences
+
+This repo is a small **Flask + SQLite** personal finance app.
+
+## Architecture & file locations (must follow)
+
+- **Flask entrypoint**: `finance_management_app/app.py`
+  - Use the existing `create_app()` pattern.
+  - Routes live in this file for now (keep it simple; don’t invent blueprints unless asked).
+- **DB helpers + schema**: `finance_management_app/db.py`
+  - SQLite schema lives in `SCHEMA_SQL`.
+  - DB connection is per-request via `g.db` (`before_request` / `teardown_request`).
+- **UI**: `finance_management_app/templates/*.html` (Jinja2)
+- **CSS**: `finance_management_app/static/app.css`
+- **SQLite file**: `instance/finance.sqlite3` (auto-created)
+
+## Conventions (keep consistent)
+
+- **Money storage**: store monetary values as **integer cents** in DB (`amount_cents`).
+  - Income is **positive**, expense is **negative** (as implemented in `tx.amount_cents`).
+  - Parse user-entered amounts using the existing `Money.from_decimal_str()` and store cents.
+- **Dates**:
+  - `tx.tx_date` is `YYYY-MM-DD` text.
+  - Month filters use `YYYY-MM` and current implementation uses `LIKE month || '%'` for simplicity.
+- **SQL style**:
+  - Prefer parameterized queries (`?` placeholders).
+  - Keep queries readable with triple-quoted SQL blocks.
+  - If adding complex reports, prefer CTEs (SQLite supports them).
+
+## When changing the database
+
+- Update `SCHEMA_SQL` in `finance_management_app/db.py`.
+- Keep changes **backward-compatible** where possible (this project currently has no migrations).
+- If you must introduce a breaking schema change, implement a simple migration step inside `init_db()` (idempotent).
+
+## UI guidelines
+
+- Keep pages consistent with Bootstrap 5.3 and the existing card/table style.
+- Use the shared layout in `templates/base.html`.
+- Prefer minimal JS; charts use Chart.js via CDN (already in templates).
+
+## Dependency & runtime constraints
+
+- This environment may not have Node/npm; do **not** introduce a Node build pipeline unless explicitly requested.
+- Prefer pure-Python dependencies and keep `requirements.txt` small.
+
+## Quality bar before finishing a change
+
+- **Run a quick smoke test** using Flask’s test client (similar to):
+  - `client.get('/')`, `/transactions`, `/budgets`, `/reports`, `/categories` should return 200.
+- Avoid adding noisy comments; only document non-obvious intent.
+- Keep code Pythonic, typed where it helps, and consistent with existing style.
+

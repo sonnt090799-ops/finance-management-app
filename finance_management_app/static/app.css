@@ -1,0 +1,35 @@
+:root{
+  --card-radius: 16px;
+}
+
+.card{
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: var(--card-radius);
+  box-shadow: 0 6px 18px rgba(0,0,0,.04);
+}
+
+.pill{
+  border-radius: 999px;
+  padding: .15rem .5rem;
+  font-size: .75rem;
+  border: 1px solid rgba(0,0,0,.08);
+  background: rgba(255,255,255,.6);
+}
+
+.amount-pos{ color: #146c43; }
+.amount-neg{ color: #b02a37; }
+
+.table td, .table th{ vertical-align: middle; }
+
+.subtle{
+  color: rgba(0,0,0,.55);
+}
+
+.form-control, .form-select{
+  border-radius: 12px;
+}
+
+.btn{
+  border-radius: 12px;
+}
+

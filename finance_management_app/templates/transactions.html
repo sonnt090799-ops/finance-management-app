@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% set title = "Transactions" %}
+
+{% block content %}
+  <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3">
+    <div>
+      <div class="h3 mb-1">Transactions</div>
+      <div class="subtle">Track income and expenses for the month.</div>
+    </div>
+    <form class="d-flex gap-2" method="get" action="{{ url_for('transactions') }}">
+      <input class="form-control" style="max-width: 160px" type="month" name="month" value="{{ month }}">
+      <input class="form-control" style="max-width: 220px" type="text" name="q" value="{{ q }}" placeholder="Search description/category">
+      <select class="form-select" style="max-width: 220px" name="category_id">
+        <option value="">All categories</option>
+        {% for c in categories %}
+          <option value="{{ c.id }}" {% if category_id == c.id %}selected{% endif %}>
+            {{ c.name }} ({{ c.kind }})
+          </option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-dark" type="submit">Filter</button>
+    </form>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-5">
+      <div class="card p-3">
+        <div class="fw-semibold mb-2">Add transaction</div>
+        <form method="post" action="{{ url_for('transactions_new') }}" class="row g-2">
+          <div class="col-12 col-md-6">
+            <label class="form-label small subtle mb-1">Date</label>
+            <input class="form-control" type="date" name="tx_date" value="{{ month }}-{{ '%02d'|format(1) }}">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label small subtle mb-1">Type</label>
+            <select class="form-select" name="kind">
+              <option value="expense" selected>Expense</option>
+              <option value="income">Income</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label small subtle mb-1">Description</label>
+            <input class="form-control" name="description" placeholder="e.g. Grocery run, Paycheck">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label small subtle mb-1">Amount</label>
+            <input class="form-control" name="amount" placeholder="e.g. 54.20">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label small subtle mb-1">Category</label>
+            <select class="form-select" name="category_id">
+              <option value="">Uncategorized</option>
+              {% for c in categories %}
+                <option value="{{ c.id }}">{{ c.name }} ({{ c.kind }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12 d-grid mt-2">
+            <button class="btn btn-dark" type="submit">Add</button>
+          </div>
+        </form>
+        <div class="small subtle mt-2">Amounts are entered as positive numbers; “Expense” will be stored as negative.</div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-7">
+      <div class="card p-3">
+        <div class="fw-semibold mb-2">Results</div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th style="width: 110px;">Date</th>
+                <th>Description</th>
+                <th style="width: 180px;">Category</th>
+                <th class="text-end" style="width: 140px;">Amount</th>
+                <th style="width: 90px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in txs %}
+                <tr>
+                  <td class="text-nowrap">{{ t.tx_date }}</td>
+                  <td class="fw-semibold">{{ t.description }}</td>
+                  <td class="text-nowrap">
+                    <span class="pill">{{ t.category_name or "Uncategorized" }}</span>
+                  </td>
+                  <td class="text-end text-nowrap {{ 'amount-pos' if t.amount_cents >= 0 else 'amount-neg' }}">
+                    {{ "$%0.2f"|format(t.amount_cents/100.0) }}
+                  </td>
+                  <td class="text-end">
+                    <form method="post" action="{{ url_for('transactions_delete', tx_id=t.id) }}" onsubmit="return confirm('Delete this transaction?');">
+                      <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                    </form>
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="5" class="text-center subtle py-4">No transactions for this filter.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

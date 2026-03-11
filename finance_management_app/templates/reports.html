@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% set title = "Reports" %}
+
+{% block content %}
+  <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3">
+    <div>
+      <div class="h3 mb-1">Reports</div>
+      <div class="subtle">Understand where money goes and how net changes over time.</div>
+    </div>
+    <form class="d-flex gap-2" method="get" action="{{ url_for('reports') }}">
+      <input class="form-control" style="max-width: 160px" type="month" name="month" value="{{ month }}">
+      <button class="btn btn-dark" type="submit">Go</button>
+    </form>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-6">
+      <div class="card p-3 h-100">
+        <div class="fw-semibold mb-2">Category breakdown ({{ month }})</div>
+        <canvas id="breakdownChart" height="140"></canvas>
+        <div class="table-responsive mt-3">
+          <table class="table table-sm mb-0">
+            <thead>
+              <tr><th>Category</th><th class="text-end">Total</th></tr>
+            </thead>
+            <tbody>
+              {% for r in breakdown %}
+                <tr>
+                  <td class="fw-semibold">{{ r.name }}</td>
+                  <td class="text-end text-nowrap {{ 'amount-pos' if r.total_cents >= 0 else 'amount-neg' }}">
+                    {{ "$%0.2f"|format(r.total_cents/100.0) }}
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="2" class="text-center subtle py-4">No data.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card p-3 h-100">
+        <div class="fw-semibold mb-2">Net trend (last 12 months)</div>
+        <canvas id="trendChart" height="140"></canvas>
+        <div class="small subtle mt-2">Positive means net income; negative means net spend.</div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    const breakdown = {{ breakdown|tojson }};
+    const trend = {{ trend|tojson }};
+
+    const bLabels = breakdown.map(r => r.name);
+    const bValues = breakdown.map(r => (r.total_cents || 0) / 100.0);
+    const bColors = breakdown.map(r => (r.total_cents || 0) < 0 ? 'rgba(176,42,55,.85)' : 'rgba(20,108,67,.85)');
+
+    const bctx = document.getElementById('breakdownChart');
+    if (bctx) {
+      new Chart(bctx, {
+        type: 'doughnut',
+        data: { labels: bLabels, datasets: [{ data: bValues.map(v => Math.abs(v)), backgroundColor: bColors, borderWidth: 0 }] },
+        options: { plugins: { legend: { position: 'bottom' } } }
+      });
+    }
+
+    const tLabels = trend.map(r => r.month);
+    const tValues = trend.map(r => (r.net_cents || 0) / 100.0);
+    const tctx = document.getElementById('trendChart');
+    if (tctx) {
+      new Chart(tctx, {
+        type: 'line',
+        data: { labels: tLabels, datasets: [{
+          label: 'Net',
+          data: tValues,
+          tension: .35,
+          fill: true,
+          borderColor: 'rgba(33,37,41,.9)',
+          backgroundColor: 'rgba(33,37,41,.08)',
+          pointRadius: 3
+        }]},
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { y: { ticks: { callback: (v) => '$' + v } } }
+        }
+      });
+    }
+  </script>
+{% endblock %}
+
